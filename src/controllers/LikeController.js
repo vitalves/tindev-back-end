@@ -2,6 +2,8 @@ const Dev = require('../models/Dev');
 
 module.exports = {
   async store(req, res) {
+    // console.log(req.io, req.connectedUsers); /* socket.io */
+
     const { user } = req.headers;
     const { devId } = req.params;
 
@@ -19,9 +21,19 @@ module.exports = {
     }
 
     if (targetDev.likes.includes(loggedDev._id)) {
+      // console.log('DEU MATCH')
+      const loggedSocket = req.connectedUsers[user]; // user logado
+      const targetSocket = req.connectedUsers[devId]; // user q recebeu o like
 
-      console.log('DEU MATCH')
+      if (loggedSocket) {
+        // avisando ao user logado (loggedSocket) q deu match em targetDev:
+        req.io.to(loggedSocket).emit('match', targetDev);
+      }
 
+      if (targetSocket) {
+        // avisando ao user que recebeu o match
+        req.io.to(targetSocket).emit('match', loggedDev);
+      }
     }
 
     loggedDev.likes.push(targetDev._id);
